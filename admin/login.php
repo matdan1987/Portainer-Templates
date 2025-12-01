@@ -1,7 +1,7 @@
 <?php
+require_once 'config.php'; // Config für Konstanten laden
 session_start();
 
-// Wenn bereits eingeloggt, zur Admin-Seite weiterleiten
 if (isset($_SESSION['authenticated']) && $_SESSION['authenticated']) {
     header('Location: index.php');
     exit;
@@ -9,14 +9,12 @@ if (isset($_SESSION['authenticated']) && $_SESSION['authenticated']) {
 
 $error = '';
 
-// Login verarbeiten
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     
-    // Einfache Authentifizierung (in der Praxis sollte dies sicherer sein)
-    // Standard-Benutzer: admin / admin123
-    if ($username === 'admin' && $password === 'admin123') {
+    // Sicherer Abgleich mit Config-Werten
+    if ($username === ADMIN_USER && password_verify($password, ADMIN_PASS_HASH)) {
         $_SESSION['authenticated'] = true;
         header('Location: index.php');
         exit;
