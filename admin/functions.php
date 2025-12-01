@@ -1,29 +1,36 @@
 <?php
 session_start();
+require_once __DIR__ . '/config.php'; // Config laden
 
-// 🔐 MySQL-Datenbank-Zugangsdaten – BITTE ANPASSEN!
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'portainertemplates');
-define('DB_USER', 'portainertemplates');
-define('DB_PASS', 'DeinSicheresPasswort');
-
-// 🗄️ Datenbankverbindung herstellen
+// 🗄️ Datenbankverbindung herstellen (Hybrid: MySQL & SQLite ready)
 function getDB() {
     static $db = null;
     if ($db === null) {
         try {
-            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-            $db = new PDO($dsn, DB_USER, DB_PASS, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
+            if (DB_TYPE === 'sqlite') {
+                // SQLite Logik (Vorbereitung)
+                $dbDir = dirname(DB_SQLITE_PATH);
+                if (!is_dir($dbDir)) { mkdir($dbDir, 0777, true); }
+                $dsn = "sqlite:" . DB_SQLITE_PATH;
+                $db = new PDO($dsn);
+            } else {
+                // MySQL Logik (Standard)
+                $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+                $db = new PDO($dsn, DB_USER, DB_PASS);
+            }
+
+            $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             
-            // Tabelle erstellen, falls nicht vorhanden
+            // Tabellen-Erstellung: Unterscheidung zwischen MySQL und SQLite Syntax
+            $idType = (DB_TYPE === 'sqlite') ? "INTEGER PRIMARY KEY AUTOINCREMENT" : "INT AUTO_INCREMENT PRIMARY KEY";
+            $engine = (DB_TYPE === 'sqlite') ? "" : "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            
             $db->exec("CREATE TABLE IF NOT EXISTS templates (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id $idType,
                 title VARCHAR(255) NOT NULL,
-                name VARCHAR(255) NOT NULL UNIQUE,
+                name VARCHAR(255) NOT NULL,
                 image VARCHAR(512) NOT NULL,
                 logo VARCHAR(512),
                 note TEXT,
@@ -34,16 +41,24 @@ function getDB() {
                 ports VARCHAR(255),
                 volumes TEXT,
                 env TEXT
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            ) $engine");
+
+            // Index separat erstellen (fängt Fehler ab, falls er schon existiert)
+            try {
+                // MySQL braucht eine Längenangabe bei TEXT/VARCHAR für Index, SQLite nicht zwingend
+                // Wir nutzen hier einen einfachen Trick und prüfen die Existenz nicht hart
+                $db->exec("CREATE UNIQUE INDEX idx_name ON templates(name)"); 
+            } catch (Exception $e) { /* Index existiert wahrscheinlich schon, ignorieren */ }
+
         } catch (PDOException $e) {
             error_log("Datenbankfehler: " . $e->getMessage());
-            die("⚠️ Datenbankverbindung fehlgeschlagen. Bitte kontaktieren Sie den Administrator.");
+            die("⚠️ Datenbankverbindung fehlgeschlagen. Prüfen Sie die config.php.");
         }
     }
     return $db;
 }
 
-// 🔒 Authentifizierung prüfen
+// 🔒 Authentifizierung prüfen (Jetzt sicher über config.php)
 function requireAuth() {
     if (!isset($_SESSION['authenticated']) || !$_SESSION['authenticated']) {
         header('Location: login.php');
