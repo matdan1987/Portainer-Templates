@@ -74,6 +74,9 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
             <button class="btn btn-ghost" onclick="copyJsonUrl()">
                 <span>JSON ansehen</span>
             </button>
+            <a href="import.php" class="btn btn-ghost">
+                <span>Import</span>
+            </a>
             <button class="btn btn-primary" onclick="openModal('create')">
                 <span>Neues Template</span>
             </button>
@@ -84,7 +87,6 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
     </header>
 
     <main class="main-grid">
-        <!-- Linke Seite: Liste -->
         <section class="card">
             <div class="card-head">
                 <div class="card-title">
@@ -159,7 +161,6 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
             </div>
         </section>
 
-        <!-- Rechte Seite: Detail & JSON Vorschau -->
         <section class="detail-shell">
             <div class="detail-inner">
                 <?php if ($currentTemplate): ?>
@@ -182,7 +183,6 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
                     </div>
 
                     <div class="detail-grid">
-                        <!-- Linker Bereich: Metadaten -->
                         <div class="section">
                             <div class="section-title">
                                 <span>Template & Image</span>
@@ -225,7 +225,6 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
                             </div>
                         </div>
 
-                        <!-- Rechter Bereich: Ports / Volumes / Env -->
                         <div class="section">
                             <div class="section-title">
                                 <span>Netzwerk, Volumes & Env</span>
@@ -252,22 +251,24 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
                             </div>
 
                            <div class="field-label"><span>Environment Variablen</span><span style="font-size:10px;color:#6b7280;">(Name | Label | Default | Preset)</span></div>
-<div class="field-control">
-    <div class="textarea-like">
-        <?php if (!empty($currentTemplate['env_display'])): ?>
-            <?php foreach ($currentTemplate['env_display'] as $env): ?>
-                <?php echo htmlspecialchars($env['name']) . 
-                     ' | ' . htmlspecialchars($env['label']) . 
-                     ' | ' . htmlspecialchars($env['default'] ?? '') . 
-                     ' | ' . ($env['preset'] ? '1' : '0'); ?>
-                <?php if (!$loop->last): ?><br><?php endif; ?>
-            <?php endforeach; ?>
-        <?php else: ?>
-            Keine Umgebungsvariablen definiert.
-        <?php endif; ?>
-    </div>
-    <button class="field-action-btn" onclick="openModal('edit', <?php echo $currentTemplate['id']; ?>)">Bearbeiten</button>
-</div>
+                            <div class="field-control">
+                                <div class="textarea-like">
+                                    <?php if (!empty($currentTemplate['env_display'])): ?>
+                                        <?php foreach ($currentTemplate['env_display'] as $env): ?>
+                                            <?php echo htmlspecialchars($env['name']) . 
+                                                 ' | ' . htmlspecialchars($env['label']) . 
+                                                 ' | ' . htmlspecialchars($env['default'] ?? '') . 
+                                                 ' | ' . ($env['preset'] ? '1' : '0'); ?>
+                                            <br>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        Keine Umgebungsvariablen definiert.
+                                    <?php endif; ?>
+                                </div>
+                                <button class="field-action-btn" onclick="openModal('edit', <?php echo $currentTemplate['id']; ?>)">Bearbeiten</button>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="section" style="margin-top:10px;">
                         <div class="section-title">
@@ -318,7 +319,6 @@ $currentTemplate = $currentTemplate ? prepareTemplateForDisplay($currentTemplate
     </main>
 </div>
 
-<!-- Modals -->
 <div id="create-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
